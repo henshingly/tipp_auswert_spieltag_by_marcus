@@ -1,7 +1,7 @@
 <?php
 /*------------------------------------------------------------------------------
 // Individuelle Auswertung der Tippspielligen für LMO 4
-//     mit Einstellmöglichkeit, dass nur die X-besten Spieltage gewertet werden
+//    mit Einstellmöglichkeit, dass nur die X-besten Spieltage gewertet werden
 // Autor: Marcus - www.bcerlbach.de
 //------------------------------------------------------------------------------
   *
@@ -51,15 +51,15 @@ $tablebackcolor = "#C7CFD6";
 $tablefontsize = "10";
 
 // Zellenhintergrundfarbe für Platz 1 bis 3
-$colorplatz1 = "#efed25"; // wenn nicht dann frei lassen -> $colorplatz1="";
-$colorplatz2 = "#bab4a2"; // wenn nicht dann frei lassen -> $colorplatz2="";
-$colorplatz3 = "#cc9b18"; // wenn nicht dann frei lassen -> $colorplatz3="";
+$colorplatz1 = "#efed25";  // wenn nicht dann frei lassen -> $colorplatz1="";
+$colorplatz2 = "#bab4a2";  // wenn nicht dann frei lassen -> $colorplatz2="";
+$colorplatz3 = "#cc9b18";  // wenn nicht dann frei lassen -> $colorplatz3="";
 
 // Anzahl der anzuzeigenden Tipper festlegen
-$showtipper = -1; // -1=keine Begrenzung
+$showtipper = -1;  // -1=keine Begrenzung
 
 // sollen Tipper die noch keinen Tipp abgegeben haben angezeigt werden?
-$shownichttipper = 0; // 0=nein - 1=ja
+$shownichttipper = 0;  // 0=nein - 1=ja
 
 // Was soll bei der Auswertung angezeigt werden?  1 = anzeigen; 0 nicht anzeigen
 $show_sp_ges = 1;   // Anzahl Spiele getippt
@@ -124,7 +124,7 @@ $zurueck = "<b><a href=\"javascript:history.go(-1);\">zurück</a></b><br>";
 
 
 //------------------------------------------------------------------------------
-// eigene Funktion zum ermitteln des Dateinames
+// Eigene Funktion zum ermitteln des Dateinames
 function dateiname($zeile) {
   $pos = strpos($zeile, "=");  // Suche nach dem =
   if ($pos++ !== false) {
@@ -133,12 +133,12 @@ function dateiname($zeile) {
 
   $dateiname = str_replace('.aus', '.l98', $dateiname);
   return $dateiname;  // z.b. Liga1.l98
-}  // end-function Dateiname
+}  // end-function dateiname
 //------------------------------------------------------------------------------
 
 
 //------------------------------------------------------------------------------
-// eigene Funktion zum ermitteln der Ligen-Info
+// Eigene Funktion zum ermitteln der Ligen-Info
 function dateiinfo($datei) {
   $dateiname = $datei;  // wird benötigt, falls die Datei nicht vorhanden ist
   $datei = getcwd() . "/ligen/". $datei;  // Ligenpfad
@@ -161,7 +161,7 @@ function dateiinfo($datei) {
 
 
 //------------------------------------------------------------------------------
-// eigene Funktion zum ermitteln max Tipptages
+// Eigene Funktion zum ermitteln max Tipptages
 function maxtipptag($datei) {
   $auswertdatei = PATH_TO_ADDONDIR ."/tipp/tipps/auswert/" . $datei;
   $auswertdatei = str_replace('.l98', '.aus', $auswertdatei);
@@ -171,7 +171,7 @@ function maxtipptag($datei) {
 
   // Überprüfen, ob Ligen-Datei existiert
   if (is_file($auswertdatei)) {
-    $array = file($auswertdatei);//file wird in array eingelesen
+    $array = file($auswertdatei);  // file wird in Array eingelesen
 
     // for durchläuft jede Zeile der Auswertungsdatei
     for ($i = 1; $i < sizeof($array); $i++) {
@@ -219,10 +219,10 @@ function sortieren_abschneiden($array, $userwerte) {
       and ($array[$x][2] > $array[$x+1][2]))) {
 
         // Werte werden zwischengespeichert...
-        // Anzahl punkte
+        // Anzahl Punkte
         $grosser_wert = $array[$x][1];
         $kleiner_wert = $array[$x+1][1];
-        // Anzahl getippter spiele
+        // Anzahl getippter Spiele
         $grosse_anz = $array[$x][2];
         $kleine_anz = $array[$x+1][2];
         /*/ Joker
@@ -389,10 +389,10 @@ if (!$_POST["iswas"]) {
 
   // for stellt das Formular zusammen in dem die Ligen ausgewählt werden können
   for ($i = 0; $i < $anzligen; $i++) {
-    $z = $i+1; //for beginnt mit 0, die ausgabe aber mit 1
-    $zl = $i+2; //wird benötigt, da die ligen in der datei ab der 3ten zeile stehen
+    $z = $i+1;  //for beginnt mit 0, die ausgabe aber mit 1
+    $zl = $i+2;  //wird benötigt, da die ligen in der Datei ab der 3ten zeile stehen
 
-    $dateiname = dateiname(trim($array[$zl])); // liefert ligen-name
+    $dateiname = Dateiname(trim($array[$zl]));  // liefert ligen-name
 
     $htmlbody .= '  <tr><td align="left" height="30"> <input type="radio" value="'.$dateiname.'" name="liga"  ';
 
@@ -475,12 +475,12 @@ else {  // wenn der Anzeige-Button geklickt wurde
           // Funktion
           sortieren_abschneiden($tmp, $userwerte);
 
-          $goal[$anztipper][2] = $userwerte[0]; // anzahl getippter spiele
-          $goal[$anztipper][1] = $userwerte[1]; // erzielte punkte
+          $goal[$anztipper][2] = $userwerte[0];  // Anzahl getippter Spiele
+          $goal[$anztipper][1] = $userwerte[1];  // erzielte Punkte
 
           // Array muss gelöscht und dann wieder neu angelegt werden - um den inhalt sowie die Länge zu löschen
           // = initilisieren  ... da es keinen Array-Inhalt-lösche-Befehl gibt
-          // unset($tmp); <- muss nicht unbedingt stehen, array neu anlegen genügt
+          // unset($tmp); <- muss nicht unbedingt stehen, Array neu anlegen genügt
           $tmp = array(array(),array());
         }  // if leere Zeile end
 
@@ -547,7 +547,7 @@ echo "<pre>";
 print_r(array_values($goal));
 echo "</pre>";
 
-//  $anzgoal = -1;
+// $anzgoal = -1;
 
 /*
   // for durchläuft jede Zeile der Auswertungsdatei
@@ -680,7 +680,7 @@ echo "</pre>";
           // Namen ebenfalls
           $grosser_name = $goal[$x][0];
           $kleiner_name = $goal[$x+1][0];
-          // Anzahl getippter spiele
+          // Anzahl getippter Spiele
           $grosse_anz = $goal[$x][2];
           $kleine_anz = $goal[$x+1][2];
           // Joker
@@ -778,7 +778,7 @@ echo "</pre>";
     // Bedingung, die alle Nicht-Tipper rausfiltert falls gewünscht
     if (($shownichttipper != 0) or ($goal[$i][2] != 0)) {
 
-      // Wert im array mit Username vergleichen -> fett darstellen
+      // Wert im Array mit Username vergleichen -> fett darstellen
       if (chop($goal[$i][0]) == $username) {
         $goal[$i][0] = "<b>". $goal[$i][0] ."</b>";
       }
@@ -786,8 +786,8 @@ echo "</pre>";
       $platz++;
 
       // Ausgabe der Platzierung wenn:
-      //  1. Punkte ungleich dem Vorgänger
-      //  2. Punkte gleich, aber Anzahl getippter Spiele unterschiedlich
+      // 1. Punkte ungleich dem Vorgänger
+      // 2. Punkte gleich, aber Anzahl getippter Spiele unterschiedlich
 
       if (($goal[$i][1] != $goal[$i-1][1]) or (($goal[$i][1] == $goal[$i-1][1]) and (($goal[$i][2] != $goal[$i-1][2])))) {
 
@@ -878,13 +878,13 @@ echo "</pre>";
   }  // for end
 
   $htmlbody .= '</table>
-<p align="center">';//'<font color='.$fontcolor.'>Anzahl der aktiven Tippspieler: '. count($goal) . '</font>';
+<p align="center">';  // '<font color='.$fontcolor.'>Anzahl der aktiven Tippspieler: '. count($goal) . '</font>';
 
   if ($shownichttipper == 0) {
     $htmlbody .= '<font class="foot">(Nicht-Tipper werden nicht dargestellt)</font>';
   }
 
-  $zeit2 = microtime(); // Zeit Stopp
+  $zeit2 = microtime();  // Zeit Stopp
 
   $htmlbody .= '<p align="center">Stand vom '.date("d.m.Y").' - '.date("H:i") .' Uhr<br><font class="foot">generiert in '.($zeit2-$zeit1).' Sekunden</font></p>
 <p align="center"><a href="auswert3.php" title="zurück zur Auswahl">zurück zur Auswahl</a>&nbsp;|&nbsp;<a href="lmo.php?action=tipp" title="zurück zum Tippspiel">zurück zum Tippspiel</a></p>';

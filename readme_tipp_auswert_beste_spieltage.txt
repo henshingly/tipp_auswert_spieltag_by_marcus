@@ -31,12 +31,12 @@
 ## MOD History:
 ##
 ##   2005-12-04 - Version 1.0
-##	- CSS im Header - keine externe Stylsheet-Datei mehr nötig
+##  - CSS im Header - keine externe Stylsheet-Datei mehr nötig
 ##  - erzeugter Code ist HTML-valid
 ##  - Prüfung ob Eingabewert größer als max. Tippspieltag ist
 ##  
 ##   2005-11-30 - beta Version
-##	- vorerst nur auf Tendenztipp getestet
+##  - vorerst nur auf Tendenztipp getestet
 ##  
 ############################################################## 
 
