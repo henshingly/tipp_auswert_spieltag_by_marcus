@@ -874,7 +874,7 @@ echo "</pre>";
       $htmlbody .= '</tr>
 ';
 
-    }  // Filter Nicht-Tipper end 
+    }  // Filter Nicht-Tipper end
   }  // for end
 
   $htmlbody .= '</table>
