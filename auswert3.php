@@ -264,8 +264,8 @@ function sortieren_abschneiden($array, $userwerte)
 
 
     // Wenn Eingabewert eine Zahl ist, dann Array auf gewünschte Länge schneiden
-    if (isset($_POST['spieltage']) && is_numeric($_POST['spieltage'])) {
-        $array = array_slice($array, 0, $_POST['spieltage']);
+    if (isset($_POST['spieltage']) && ctype_digit((string) $_POST['spieltage'])) {
+        $array = array_slice($array, 0, (int) $_POST['spieltage']);
     }
 
     $userwerte[0] = 0;
@@ -442,7 +442,8 @@ if (empty($_POST['iswas'])) {
     }
 
     // Prüfen ob die Eingabe kleiner gleich dem max. Tippspieltag ist
-    $spieltage = $_POST['spieltage'] ?? '';
+    // nur ganze Zahlen zulassen (Wert wird später in HTML ausgegeben)
+    $spieltage = (isset($_POST['spieltage']) && ctype_digit((string) $_POST['spieltage'])) ? (int) $_POST['spieltage'] : 0;
     $ligadatei = basename((string)($_POST['liga'] ?? ''));  // nur der Dateiname, kein Pfad
     $bestespieltage = (isset($_POST['bestespieltage']) && $_POST['bestespieltage'] == 1) ? 1 : 0;
     $maxtt = maxtipptag($ligadatei);
