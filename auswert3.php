@@ -1,7 +1,7 @@
 <?php
 /*------------------------------------------------------------------------------
 // Individuelle Auswertung der Tippspielligen für LMO 4
-//    mit Einstellmöglichkeit, dass nur die X-besten Spieltage gewertet werden
+//     mit Einstellmöglichkeit, dass nur die X-besten Spieltage gewertet werden
 // Autor: Marcus - www.bcerlbach.de
 //------------------------------------------------------------------------------
   *
@@ -51,15 +51,15 @@ $tablebackcolor = "#C7CFD6";
 $tablefontsize = "10";
 
 // Zellenhintergrundfarbe für Platz 1 bis 3
-$colorplatz1 = "#efed25";  // wenn nicht dann frei lassen -> $colorplatz1="";
-$colorplatz2 = "#bab4a2";  // wenn nicht dann frei lassen -> $colorplatz2="";
-$colorplatz3 = "#cc9b18";  // wenn nicht dann frei lassen -> $colorplatz3="";
+$colorplatz1 = "#efed25"; // wenn nicht dann frei lassen -> $colorplatz1="";
+$colorplatz2 = "#bab4a2"; // wenn nicht dann frei lassen -> $colorplatz2="";
+$colorplatz3 = "#cc9b18"; // wenn nicht dann frei lassen -> $colorplatz3="";
 
 // Anzahl der anzuzeigenden Tipper festlegen
-$showtipper = -1;  // -1=keine Begrenzung
+$showtipper = -1; // -1=keine Begrenzung
 
 // sollen Tipper die noch keinen Tipp abgegeben haben angezeigt werden?
-$shownichttipper = 0;  // 0=nein - 1=ja
+$shownichttipper = 0; // 0=nein - 1=ja
 
 // Was soll bei der Auswertung angezeigt werden?  1 = anzeigen; 0 nicht anzeigen
 $show_sp_ges = 1;   // Anzahl Spiele getippt
@@ -86,8 +86,11 @@ $status = "www.bcerlbach.de - Individuelle Auswertung der Tippspielligen";
 
 require_once(dirname(__FILE__).'/init.php');
 
-// Datei gesamt.aus in Array einlesen... evtl. Pfad anpassen
-$auswertdatei = PATH_TO_ADDONDIR."/tipp/tipps/auswert/gesamt.aus";
+// Verzeichnis der Auswertungsdateien (Tippverzeichnis aus der Addon-Konfiguration; Rückfall auf den alten Standardpfad)
+$auswertverz = PATH_TO_ADDONDIR."/tipp/".(isset($tipp_dirtipp) && $tipp_dirtipp != '' ? $tipp_dirtipp : "tipps/")."auswert/";
+
+// Datei gesamt.aus in Array einlesen
+$auswertdatei = $auswertverz."gesamt.aus";
 
 // Prüfen ob Datei vorhanden ist
 if (is_file($auswertdatei)) {
@@ -99,8 +102,13 @@ else {
 }
 
 // Tippmodus aus config-Datei auslesen
-$tippmodus = @file(PATH_TO_LMO."/config/tipp/cfg.txt");
-$tippmodus = substr($tippmodus[34], 10, 1);  // 0=Tendenz  1=Ergebnis
+if (isset($tipp_tippmodus)) {
+  $tippmodus = (int)$tipp_tippmodus;  // 0=Tendenz  1=Ergebnis (aus der Addon-Konfiguration)
+}
+else {
+  $tippmodus = @file(PATH_TO_LMO."/config/tipp/cfg.txt");
+  $tippmodus = substr($tippmodus[34] ?? '', 10, 1);  // 0=Tendenz  1=Ergebnis
+}
 
 if ($tippmodus == 0) {
   $var_prozrichtig = "Sp%";  // Prozent Spieltipp richtig - Standard "Sp%"
@@ -124,7 +132,7 @@ $zurueck = "<b><a href=\"javascript:history.go(-1);\">zurück</a></b><br>";
 
 
 //------------------------------------------------------------------------------
-// Eigene Funktion zum ermitteln des Dateinames
+// eigene Funktion zum ermitteln des Dateinames
 function dateiname($zeile) {
   $pos = strpos($zeile, "=");  // Suche nach dem =
   if ($pos++ !== false) {
@@ -133,12 +141,12 @@ function dateiname($zeile) {
 
   $dateiname = str_replace('.aus', '.l98', $dateiname);
   return $dateiname;  // z.b. Liga1.l98
-}  // end-function dateiname
+}  // end-function Dateiname
 //------------------------------------------------------------------------------
 
 
 //------------------------------------------------------------------------------
-// Eigene Funktion zum ermitteln der Ligen-Info
+// eigene Funktion zum ermitteln der Ligen-Info
 function dateiinfo($datei) {
   $dateiname = $datei;  // wird benötigt, falls die Datei nicht vorhanden ist
   $datei = getcwd() . "/ligen/". $datei;  // Ligenpfad
@@ -161,9 +169,11 @@ function dateiinfo($datei) {
 
 
 //------------------------------------------------------------------------------
-// Eigene Funktion zum ermitteln max Tipptages
+// eigene Funktion zum ermitteln max Tipptages
 function maxtipptag($datei) {
-  $auswertdatei = PATH_TO_ADDONDIR ."/tipp/tipps/auswert/" . $datei;
+  global $auswertverz;
+  $datei = basename((string)$datei);
+  $auswertdatei = $auswertverz . $datei;
   $auswertdatei = str_replace('.l98', '.aus', $auswertdatei);
 
   $tmp = 0;
@@ -171,7 +181,7 @@ function maxtipptag($datei) {
 
   // Überprüfen, ob Ligen-Datei existiert
   if (is_file($auswertdatei)) {
-    $array = file($auswertdatei);  // file wird in Array eingelesen
+    $array = file($auswertdatei);//file wird in array eingelesen
 
     // for durchläuft jede Zeile der Auswertungsdatei
     for ($i = 1; $i < sizeof($array); $i++) {
@@ -179,7 +189,7 @@ function maxtipptag($datei) {
       //SG ermitteln
       $pos = strpos($zeile, "SG");
       if (($pos !== false) and ($pos == 0)) {
-        $tmp = substr($zeile, 2, strpos($zeile, "=")-2);
+        $tmp = (int)substr($zeile, 2, strpos($zeile, "=")-2);
         if ($tmp > $max) { $max = $tmp; }
       }  // if $pos
     }  // for Auswertungsdatei
@@ -206,7 +216,7 @@ function sortieren_abschneiden($array, $userwerte) {
   // Schleife wird entsprechend der Anzahl der Elemente im Array $zahlen wiederholt
   for($y = 0; $y < $anzahl_elemente; $y++) {
     // Jedes Element wird einzelen angesprochen und verschoben wenn das linke Element grösser ist als der rechte
-    for($x = 0; $x < $anzahl_elemente; $x++) {
+    for($x = 0; $x < $anzahl_elemente - 1; $x++) {
       // In diesem Beispiel aufsteigend.
       // Möchte man absteigend sortieren, einfach das grösser Zeichen mit einem kleiner Zeichen tauschen
 
@@ -214,46 +224,46 @@ function sortieren_abschneiden($array, $userwerte) {
       // 1. erzielte Punkte unterschiedlich  oder
       // 2. erzielte Punkte gleich + erzielte Punkte>0 + anz. Tipp unterschiedlich
       if (($array[$x][1] < $array[$x+1][1])
-      or (($array[$x][1] == $array[$x+1][1])
-      and ($array[$x][1] > 0)
-      and ($array[$x][2] > $array[$x+1][2]))) {
+        or (($array[$x][1] == $array[$x+1][1])
+        and ($array[$x][1] > 0)
+        and ($array[$x][2] > $array[$x+1][2]))) {
 
-        // Werte werden zwischengespeichert...
-        // Anzahl Punkte
-        $grosser_wert = $array[$x][1];
-        $kleiner_wert = $array[$x+1][1];
-        // Anzahl getippter Spiele
-        $grosse_anz = $array[$x][2];
-        $kleine_anz = $array[$x+1][2];
-        /*/ Joker
-        $grosse_joker = $array[$x][3];
-        $kleine_joker = $array[$x+1][3];
-        // Team
-        $grosse_team = $array[$x][4];
-        $kleine_team = $array[$x+1][4];
-        */
+          /* Werte werden zwischengespeichert... */
+          //-anzahl punkte
+          $grosser_wert = $array[$x][1];
+          $kleiner_wert = $array[$x+1][1];
+          //-anzahl getippter spiele
+          $grosse_anz = $array[$x][2];
+          $kleine_anz = $array[$x+1][2];
+          /*/-joker
+          $grosse_joker = $array[$x][3];
+          $kleine_joker = $array[$x+1][3];
+          //-team
+          $grosse_team = $array[$x][4];
+          $kleine_team = $array[$x+1][4];
+          */
 
-        // ... und anschließend vertauscht
-        // Anzahl Punkte
-        $array[$x][1] = $kleiner_wert;
-        $array[$x+1][1] = $grosser_wert;
-        // Anzahl getippter Spiele tauschen
-        $array[$x][2] = $kleine_anz;
-        $array[$x+1][2] = $grosse_anz;
-        /*/ Joker
-        $array[$x][3] = $kleine_joker;
-        $array[$x+1][3] = $grosse_joker;
-        // Team
-        $array[$x][4] = $kleine_team;
-        $array[$x+1][4] = $grosse_team;
-        */
-      }  // if end
-    }  // for 2 end
-  }  // for 1 end
+          /* ... und anschließend vertauscht */
+          //anzahl punkte
+          $array[$x][1] = $kleiner_wert;
+          $array[$x+1][1] = $grosser_wert;
+          //-anzahl getippter spiele tauschen
+          $array[$x][2] = $kleine_anz;
+          $array[$x+1][2] = $grosse_anz;
+          /*/-joker
+          $array[$x][3] = $kleine_joker;
+          $array[$x+1][3] = $grosse_joker;
+          //-team
+          $array[$x][4] = $kleine_team;
+          $array[$x+1][4] = $grosse_team;
+          */
+      }  // if
+    }  // for 2
+  }  // for 1
 
 
   // Wenn Eingabewert eine Zahl ist, dann Array auf gewünschte Länge schneiden
-  if (is_numeric($_POST['spieltage'])) {
+  if (isset($_POST['spieltage']) && is_numeric($_POST['spieltage'])) {
     $array = array_slice ($array, 0, $_POST['spieltage']);
   }
 
@@ -281,6 +291,7 @@ $htmlhead = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
       "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
+ <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
  <title>'.$title.'</title>
 <style type="text/css">
 body {
@@ -375,13 +386,17 @@ $htmlfoot = '<hr width="195" align="right" />
 /*------------------------------------------------------------------------------
 /* Formular anzeigen, noch nichts geklickt
 /*----------------------------------------------------------------------------*/
-if (!$_POST["iswas"]) {
+$htmlbody = '';
+$info = '';
+$joker = 0;
+$team = 0;
+if (empty($_POST["iswas"])) {
 
   $htmlbody .= '
   <body>
   <h2>Individuelle Auswertung</h2>
   <table border="1" cellspacing="0" cellpadding="5" align="center"><tr><td align="center">
-    <form name="formular" method="post" action="'.$_SERVER["REQUEST_URI"].'">
+    <form name="formular" method="post" action="'.htmlspecialchars($_SERVER["REQUEST_URI"], ENT_QUOTES).'">
   <table border="0" cellspacing="0" cellpadding="0" align="center">
     <tr> <td colspan="2" align="left"><br />Die gewünschte Liga markieren.<br>Anschließend Button klicken.<br />&nbsp;
     </td> </tr>
@@ -389,10 +404,10 @@ if (!$_POST["iswas"]) {
 
   // for stellt das Formular zusammen in dem die Ligen ausgewählt werden können
   for ($i = 0; $i < $anzligen; $i++) {
-    $z = $i+1;  //for beginnt mit 0, die ausgabe aber mit 1
-    $zl = $i+2;  //wird benötigt, da die ligen in der Datei ab der 3ten zeile stehen
+    $z = $i+1; //for beginnt mit 0, die ausgabe aber mit 1
+    $zl = $i+2; //wird benötigt, da die ligen in der datei ab der 3ten zeile stehen
 
-    $dateiname = Dateiname(trim($array[$zl]));  // liefert ligen-name
+    $dateiname = dateiname(trim($array[$zl])); // liefert ligen-name
 
     $htmlbody .= '  <tr><td align="left" height="30"> <input type="radio" value="'.$dateiname.'" name="liga"  ';
 
@@ -415,20 +430,22 @@ if (!$_POST["iswas"]) {
 
 //******************************************************************************
 }
-else {  // wenn der Anzeige-Button geklickt wurde
-  $zeit1 = microtime();  // Zeit nehmen Start
+else { // wenn der anzeige-button geklickt wurde
+  $zeit1 = microtime(true);  // Zeit nehmen Start
 
-  // eingeloggten User ermitteln
+  /* eingeloggten User ermitteln */
   $username = "";
   if ( (isset($_SESSION['lmotippername']) && $_SESSION['lmotippername'] != "") && (isset($_SESSION['lmotipperok']) && $_SESSION['lmotipperok'] > 0) ) {
     $username = "[". $_SESSION['lmotippername'] ."]";
   }
 
   // Prüfen ob die Eingabe kleiner gleich dem max. Tippspieltag ist
-  $spieltage = $_POST['spieltage'];
-  $maxtt = maxtipptag($_POST['liga']);
+  $spieltage = $_POST['spieltage'] ?? '';
+  $ligadatei = basename((string)($_POST['liga'] ?? ''));  // nur der Dateiname, kein Pfad
+  $bestespieltage = (isset($_POST['bestespieltage']) && $_POST['bestespieltage'] == 1) ? 1 : 0;
+  $maxtt = maxtipptag($ligadatei);
   // Checkbox markiert und Wert eingetragen
-  if (($_POST['bestespieltage'] == 1) and (!empty($spieltage)) and ($spieltage > 0)) {
+  if (($bestespieltage == 1) and (!empty($spieltage)) and ($spieltage > 0)) {
 
     if (($spieltage != 1) and ($spieltage <= $maxtt)) {
       $info = '<p align="center">&bull;&nbsp;die ' .$spieltage.' besten Spieltage wurden gewertet</p>';
@@ -436,22 +453,22 @@ else {  // wenn der Anzeige-Button geklickt wurde
     else if (($spieltage == 1) and ($spieltage <= $maxtt)) {
       $info = '<p align="center">&bull;&nbsp;der beste Spieltag wurde gewertet</p>';
     }
-    else {  // wenn Eingabe maxtipptag größer ist als max Tippspieltage
+    else { // wenn Eingabe maxtipptag größer ist als max Tippspieltage
       $info = '<p align="center">&bull;&nbsp;Eingabewert ist größer als der momentan verfügbare Tippspieltag, deshalb wurden ' .$maxtt.' Spieltage gewertet!</p>';
     }
   }  // if bestespieltage end
 
 
 
-  $goal = array(array(),array());  // zweidimensionales Array anlegen
-  $tmp = array(array(),array());
+  $goal = array();  // zweidimensionales Array anlegen
+  $tmp = array();
 
   $userwerte = array();  // Beinhaltet Spiele und Punkte
 
   $anztipper = -1;  // Zählvariable
   $z = 0;
 
-  $auswertdatei = PATH_TO_ADDONDIR ."/tipp/tipps/auswert/" . $_POST['liga'];
+  $auswertdatei = $auswertverz . $ligadatei;
   $auswertdatei = str_replace('.l98', '.aus', $auswertdatei);
 
   // Überprüfen, ob Ligen-Datei existiert
@@ -460,12 +477,12 @@ else {  // wenn der Anzeige-Button geklickt wurde
     $array = file($auswertdatei);  // File in Array einlesen
 
     // Wenn Spieltagelimit eingegeben wurde
-    if ($_POST['bestespieltage'] == 1) {  // Checkbox markiert
+    if ($bestespieltage == 1) {  // Checkbox markiert
 
-      // for durchläuft jede Zeile der Auswertungsdatei
+      // for durchläuft jede Zeile der Auswertungsdatei */
       for ($i = 1; $i <= sizeof($array); $i++) {
 
-        $zeile = trim($array[$i]);  // entfernt überflüssige Zeichen
+        $zeile = isset($array[$i]) ? trim($array[$i]) : '';  // entfernt überflüssige Zeichen (hinter der letzten Zeile gilt als Leerzeile)
 
         // leere Zeile bedeutet, dass neuer Tipper folgt
         if ($zeile == '') {
@@ -473,249 +490,266 @@ else {  // wenn der Anzeige-Button geklickt wurde
           $z = 0;
 
           // Funktion
-          sortieren_abschneiden($tmp, $userwerte);
+          if (!empty($tmp) && $anztipper >= 0) {
+            $userwerte = sortieren_abschneiden($tmp, $userwerte);
+            $goal[$anztipper][2] = $userwerte[0]; // anzahl getippter spiele
+            $goal[$anztipper][1] = $userwerte[1]; // erzielte punkte
+          }
 
-          $goal[$anztipper][2] = $userwerte[0];  // Anzahl getippter Spiele
-          $goal[$anztipper][1] = $userwerte[1];  // erzielte Punkte
+          //array muss gelöscht und dann wieder neu angelegt werden - um den inhalt sowie die länge zu löschen
+          // = initilisieren  ... da es keinen array-inhalt-lösche-befehl gibt
+          //unset($tmp); <- muss nicht unbedingt stehen, array neu anlegen genügt
+          $tmp = array();
 
-          // Array muss gelöscht und dann wieder neu angelegt werden - um den inhalt sowie die Länge zu löschen
-          // = initilisieren  ... da es keinen Array-Inhalt-lösche-Befehl gibt
-          // unset($tmp); <- muss nicht unbedingt stehen, Array neu anlegen genügt
-          $tmp = array(array(),array());
-        }  // if leere Zeile end
+        }//if
 
-        // Name ermitteln
+        //name ermitteln
         $pos1 = strpos($zeile, "[");
         $pos2 = strpos($zeile, "]");
         if (($pos1 !== false) and ($pos2 !== false)) {
-            $goal[++$anztipper][0] = $zeile;
+            $goal[++$anztipper] = array($zeile, 0, 0, 0, '');
+
         }
 
-        // SG (getippte Spiele) ermitteln
+        //SG (getippte spiele) ermitteln
         $pos = strpos($zeile, "SG");
         if (($pos !== false) and ($pos == 0)) {
-            $tmp[$z][2] = substr($zeile, strpos($zeile, "=")+1, strlen($zeile));
-        }  // if getippte Spiele end
+            if (!isset($tmp[$z])) { $tmp[$z] = array(1 => 0, 2 => 0); }
+            $tmp[$z][2] = (int)substr($zeile, strpos($zeile, "=")+1, strlen($zeile));
+        }//if
 
-        // TP (erzielte Punkte) ermitteln
+        //TP (erzielte punkte) ermitteln
         $pos = strpos($zeile, "TP");
         if (($pos !== false) and ($pos == 0)) {
-            $tmp[$z++][1] = substr($zeile, strpos($zeile, "=")+1, strlen($zeile));
-        }  // if erzielte Punkte end
+            if (!isset($tmp[$z])) { $tmp[$z] = array(1 => 0, 2 => 0); }
+            $tmp[$z++][1] = (int)substr($zeile, strpos($zeile, "=")+1, strlen($zeile));
+        }//if
 
-      }  //for Durchlauf Auswertungsdatei end
+      }//for
 
-    }  // if bestespieltage=1 end
+    }//bestespieltage=1
 
-    else {  // Ergebniss der Tippspielliga wird normal ausgegeben
-      // for durchläuft jede Zeile der Auswertungsdatei
+      else //erbniss der tippspielliga wird normal ausgegeben
+      {
+         /* for durchläuft jede zeile der auswertungsdatei */
       for ($i = 1; $i <= sizeof($array); $i++) {
 
-        $zeile = trim($array[$i]);
+        $zeile = isset($array[$i]) ? trim($array[$i]) : '';
 
-        // Name ermitteln
+        //name ermitteln
         $pos1 = strpos($zeile, "[");
         $pos2 = strpos($zeile, "]");
         if (($pos1 !== false) and ($pos2 !== false)) {
-          $goal[++$anztipper][0] = $zeile;
+            $goal[++$anztipper] = array($zeile, 0, 0, 0, '');
         }
 
-        // SG (getippte Spiele) ermitteln
+        //SG (getippte spiele) ermitteln
         $pos = strpos($zeile, "SG");
-        if (($pos !== false) and ($pos == 0)) {
-          $goal[$anztipper][2] += substr($zeile, strpos($zeile, "=")+1, strlen($zeile));
-        }  // if end
+        if (($pos !== false) and ($pos == 0) and ($anztipper >= 0)) {
+            $goal[$anztipper][2] += (int)substr($zeile, strpos($zeile, "=")+1, strlen($zeile));
+        }//if
 
-        // TP (erzielte Punkte) ermitteln
+        //TP (erzielte punkte) ermitteln
         $pos = strpos($zeile, "TP");
-        if (($pos !== false) and ($pos == 0)) {
-          $goal[$anztipper][1] += substr($zeile, strpos($zeile, "=")+1, strlen($zeile));
-        }  // if end
+        if (($pos !== false) and ($pos == 0) and ($anztipper >= 0)) {
+            $goal[$anztipper][1] += (int)substr($zeile, strpos($zeile, "=")+1, strlen($zeile));
+        }//if
 
-        // falls die liga aboniert, aber nicht getippt wurde
-        if ($goal[$anztipper][2] == '') { $goal[$anztipper][2] = 0; }
-        if ($goal[$anztipper][1] == '') { $goal[$anztipper][1] = 0; }
+        //falls liga aboniert, aber nicht getippt wurde
 
-      }  // for end
+      }//for
 
-    }  // else bestespieltage=1 end
+    }//else bestespieltage=1
 
-  }  // if isfile end
+  }//isfile
 
-/*/ Test
+
+
+/*/ test
 echo "<pre>";
 print_r(array_values($goal));
 echo "</pre>";
 
-// $anzgoal = -1;
 
-/*
-  // for durchläuft jede Zeile der Auswertungsdatei
-  for ($i = $anzligen+3; $i < sizeof($array); $i++) {
-    // Usernamen ermitteln, wenn gefunden in Array speichern
+
+
+//  $anzgoal = -1;
+
+  /* for durchläuft jede zeile von der auswertungsdatei */
+/*  for ($i = $anzligen+3; $i < sizeof($array); $i++)
+    {
+    //usernamen ermitteln, wenn gefunden in array speichern
     $posname = strpos($array[$i], "[");
     if ($posname !== false) {
-      // gefundenen Namen ins Array speichern
+      //gefundenen namen ins array speichern
       $goal[++$anzgoal][0] = $array[$i];
     }
 
-    // foreach1 ermittelt die erzielten Punkte
-    foreach ($ligenkurz as $value) {
-      $value = $value."=";  // = muss stehen da bei TP1 auch TP10 TP11 erfasst
+       //foreach1 ermittelt die erzielten punkte
+    foreach ($ligenkurz as $value)
+    {
+        $value = $value."="; // = muss stehen da bei TP1 auch TP10 TP11 erfasst
       $pos1 = strpos($array[$i], $value);
       if ($pos1 !== false) {
-        // Punkte gleich Array dazu addieren
-        $goal[$anzgoal][1] += ltrim(strrchr($array[$i],'='),'=');
-      }
-    }  // foreach1 end
+           //punkte gleich array dazu addieren
+           $goal[$anzgoal][1] += ltrim(strrchr($array[$i],'='),'=');
+       }
+    }//foreach1 end
 
-    // foreach2 ermittelt die Anzahl an getippten Spielen
-    foreach ($anzgetipptkurz as $value) {
-      $value = $value."=";  // = muss stehen da bei TP1 auch TP10 TP11 erfasst
+    //foreach2 ermittelt die anzahl an getippten spielen
+    foreach ($anzgetipptkurz as $value)
+    {
+        $value = $value."="; // = muss stehen da bei TP1 auch TP10 TP11 erfasst
       $pos1 = strpos($array[$i], $value);
       if ($pos1 !== false) {
-        // Anzahl getippter Spiele gleich Array dazu addieren
+        //anzahl getippter spiele gleich array dazu addieren
         $goal[$anzgoal][2] += ltrim(strrchr($array[$i],'='),'=');
-      }
-    }  // foreach2 end
+       }
+    }//foreach2 end
 
-    // wird nur benötigt, wenn die Joker-Punkte angezeigt werden sollen
-    if ($show_joker == 1) {
-      // foreach3 ermittelt Jokerpunkte
-      foreach ($jokerkurz as $value) {
-        $value = $value."=";  // = muss stehen da bei TP1 auch TP10 TP11 erfasst
+    //wird nur benötigt, wenn die joker-punkte angezeigt werden sollen
+    if ($show_joker == 1)
+      {
+      //foreach3 ermittelt jokerpunkte
+      foreach ($jokerkurz as $value)
+      {
+          $value = $value."="; // = muss stehen da bei TP1 auch TP10 TP11 erfasst
         $pos1 = strpos($array[$i], $value);
         if ($pos1 !== false) {
-          // Anzahl getippter Spiele gleich Array dazu addieren
-          $goal[$anzgoal][3] += ltrim(strrchr($array[$i],'='),'=');
-          // var. zeigt ob Jokerpunkte genutzt werden, wenn ja joker=1
-          $joker = 1;
-        }
-      }  // foreach3 end
-    }  // if show_joker end
+            //anzahl getippter spiele gleich array dazu addieren
+             $goal[$anzgoal][3] += ltrim(strrchr($array[$i],'='),'=');
+            //var. zeigt ob jokerpunkte genutzt werden, wenn ja joker=1
+             $joker = 1;
+         }
+      }//foreach3 end
+    }//if joker
 
-    // wird nur benötigt, wenn Teams angezeigt werden sollen
-    if ($show_team == 1) {
-      // Teamname ermitteln, wenn gefunden in Array speichern
+    //wird nur benötigt, wenn teams angezeigt werden sollen
+    if ($show_team == 1)
+      {
+      //teamname ermitteln, wenn gefunden in array speichern
       $posname = strpos($array[$i], "Team=");
-      if ($posname !== false) {
-        // gefundenen Namen ins Array speichern
+      if ($posname !== false)  {
+        //gefundenen namen ins array speichern
         $goal[$anzgoal][4] = ltrim(strrchr($array[$i],'='),'=');
-        //var. zeigt ob Teams genutzt werden muss, wenn ja team=1
+        //var. zeigt ob teams genutzt werden muss, wenn ja team=1
         if (strlen($goal[$anzgoal][4]) != 1) {
-          $team = 1;
+            $team = 1;
         }
       }
-    }  // if show_team end
+    }//if
 
-  }  // for Durchlauf Auswertungsdatei end
+  }//end for
 
-  /*for ($i=0; $i < count($goal); $i++) {
-    echo "$i  ".$goal[$i][0]."  ".$goal[$i][1]." ".$goal[$i][2]."  ".$goal[$i][3]."  ".$goal[$i][4]."<br>";
+/*for ($i=0; $i < count($goal); $i++){
+  echo "$i  ".$goal[$i][0]."  ".$goal[$i][1]." ".$goal[$i][2]."  ".$goal[$i][3]."  ".$goal[$i][4]."<br>";
   }*/
 
 
 
-  /*------------------------------------------------------------------------------
-  /* BUBBLE SORT des zweidimensionalen Arrays */
-  /*-------------------------------------------*/
+/*------------------------------------------------------------------------------
+/* BUBBLE SORT  des zweidimensionalen arrays */
+/*-------------------------------------------*/
 
-  $anzahl_elemente = count($goal);  // Anzahl der Elemente ermittlen. -1 da Arrays mit 0 beginnen! ;o)
+$anzahl_elemente = count($goal); //Anzal der Elemente ermittlen. -1 da Arrays mit 0 beginnen! ;o)
 
-  // Schleife wird entsprechend der Anzahl der Elemente im Array $zahlen wiederholt
-  for($y = 0; $y < $anzahl_elemente; $y++) {
-    //Jedes Element wird einzelen angesprochen und verschoben wenn das linke Element grösser ist als der rechte
-    for($x = 0; $x < $anzahl_elemente; $x++) {
-      // In diesem Beispiel aufsteigend.
-      // Möchte man absteigend sortieren, einfach das grösser Zeichen mit einem kleiner Zeichen tauschen
+//Schleife wird entsprechend der Anzahl der Elemente im Array $zahlen wiederholt
+for($y = 0; $y < $anzahl_elemente; $y++)
+     {
+     //Jedes Element wird einzelen angesprochen und verschoben wenn das linke Element grösser ist als der rechte
+     for($x = 0; $x < $anzahl_elemente - 1; $x++)
+          {
+          //In diesem Beispiel aufsteigend.
+          //Möchte man absteigend sortieren, einfach das grösser Zeichen mit einem kleiner Zeichen tauschen
 
-      // tauschen wenn:
-      // 1. erzielte Punkte unterschiedlich oder
-      // 2. erzielte Punkte gleich + erzielte Punkte > 0 + anz. Tipp unterschiedlich
-      if (($goal[$x][1] < $goal[$x+1][1])
-      or (($goal[$x][1] == $goal[$x+1][1])
-      and ($goal[$x][1] > 0)
-      and ($goal[$x][2] > $goal[$x+1][2]))) {
+    // tauschen wenn:
+    // 1. erzielte punkte unterschiedlich  oder
+    // 2. erzielte pkte gleich + erzielte pkte>0 + anz. tipp unterschiedlich
+          if (($goal[$x][1] < $goal[$x+1][1])
+             or (($goal[$x][1] == $goal[$x+1][1])
+        and ($goal[$x][1] > 0)
+        and ($goal[$x][2] > $goal[$x+1][2]))) {
 
-        // Werte werden zwischengespeichert...
-        $grosser_wert = $goal[$x][1];
-        $kleiner_wert = $goal[$x+1][1];
-        // Namen ebenfalls
-        $grosser_name = $goal[$x][0];
-        $kleiner_name = $goal[$x+1][0];
-        // Anzahl getippter Spiele
-        $grosse_anz = $goal[$x][2];
+              //Werte werden zwischengespeichert...
+              $grosser_wert = $goal[$x][1];
+              $kleiner_wert = $goal[$x+1][1];
+        //-namen ebenfalls
+          $grosser_name = $goal[$x][0];
+              $kleiner_name = $goal[$x+1][0];
+              //-anzahl getippter spiele
+              $grosse_anz = $goal[$x][2];
         $kleine_anz = $goal[$x+1][2];
-        // Joker
-        $grosse_joker = $goal[$x][3];
+        //-joker
+              $grosse_joker = $goal[$x][3];
         $kleine_joker = $goal[$x+1][3];
-        // Team
-        $grosse_team = $goal[$x][4];
+        //-team
+              $grosse_team = $goal[$x][4];
         $kleine_team = $goal[$x+1][4];
 
-        // ... und anschließend Werte vertauschen
-        $goal[$x][1] = $kleiner_wert;
-        $goal[$x+1][1] = $grosser_wert;
-        // Namen tauschen
-        $goal[$x][0] = $kleiner_name;
-        $goal[$x+1][0] = $grosser_name;
-        // Anzahl getippter Spiele tauschen
+              //... und anschließen werte vertauschen
+              $goal[$x][1] = $kleiner_wert;
+              $goal[$x+1][1] = $grosser_wert;
+              //-namen tauschen
+              $goal[$x][0] = $kleiner_name;
+              $goal[$x+1][0] = $grosser_name;
+              //-anzahl getippter spiele tauschen
         $goal[$x][2] = $kleine_anz;
         $goal[$x+1][2] = $grosse_anz;
-        // Joker
+        //-joker
         $goal[$x][3] = $kleine_joker;
         $goal[$x+1][3] = $grosse_joker;
-        // Team
+          //-team
         $goal[$x][4] = $kleine_team;
         $goal[$x+1][4] = $grosse_team;
-      }  // if end
+          }//if
 
-/*
-      // Erzielte Punkte sind gleich -> Anzahl Tipps entscheidet
-      else if (($goal[$x][1] == $goal[$x+1][1]) and ($goal[$x][1] > 0)) {
-        if ($goal[$x][2] > $goal[$x+1][2]) {  // Anzahl Tipps auswerten
-          // Werte werden zwischengespeichert...
-          $grosser_wert = $goal[$x][1];
-          $kleiner_wert = $goal[$x+1][1];
-          // Namen ebenfalls
-          $grosser_name = $goal[$x][0];
-          $kleiner_name = $goal[$x+1][0];
-          // Anzahl getippter Spiele
-          $grosse_anz = $goal[$x][2];
-          $kleine_anz = $goal[$x+1][2];
-          // Joker
-          $grosse_joker = $goal[$x][3];
-          $kleine_joker = $goal[$x+1][3];
-          // Team
-          $grosse_team = $goal[$x][4];
-          $kleine_team = $goal[$x+1][4];
+     /*         //erzielte punkte sind gleich -> anzahl tipps entscheidet
+        else if (($goal[$x][1] == $goal[$x+1][1]) and ($goal[$x][1] > 0))
+              {
+              if ($goal[$x][2] > $goal[$x+1][2])//Anzahl Tipps auswerten
+               {
+                    //Werte werden zwischengespeichert...
+                    $grosser_wert = $goal[$x][1];
+                    $kleiner_wert = $goal[$x+1][1];
+              //-namen ebenfalls
+                $grosser_name = $goal[$x][0];
+                    $kleiner_name = $goal[$x+1][0];
+                    //-anzahl getippter spiele
+                    $grosse_anz = $goal[$x][2];
+              $kleine_anz = $goal[$x+1][2];
+              //-joker
+                    $grosse_joker = $goal[$x][3];
+              $kleine_joker = $goal[$x+1][3];
+                //-team
+                    $grosse_team = $goal[$x][4];
+              $kleine_team = $goal[$x+1][4];
 
-          // ... und anschließend Werte vertauschen
-          $goal[$x][1] = $kleiner_wert;
-          $goal[$x+1][1] = $grosser_wert;
-          // Namen tauschen
-          $goal[$x][0] = $kleiner_name;
-          $goal[$x+1][0] = $grosser_name;
-          // Anzahl getippter Spiele tauschen
-          $goal[$x][2] = $kleine_anz;
-          $goal[$x+1][2] = $grosse_anz;
-          // Joker
-          $goal[$x][3] = $kleine_joker;
-          $goal[$x+1][3] = $grosse_joker;
-          // Team
-          $goal[$x][4] = $kleine_team;
-          $goal[$x+1][4] = $grosse_team;
-        }
-      }  // else if end
-*/
-    }  // for2 end
-  }  // for1 end
+                    //... und anschließen werte vertauschen
+                    $goal[$x][1] = $kleiner_wert;
+                    $goal[$x+1][1] = $grosser_wert;
+                    //-namen tauschen
+                    $goal[$x][0] = $kleiner_name;
+                    $goal[$x+1][0] = $grosser_name;
+                    //-anzahl getippter spiele tauschen
+              $goal[$x][2] = $kleine_anz;
+              $goal[$x+1][2] = $grosse_anz;
+              //-joker
+              $goal[$x][3] = $kleine_joker;
+              $goal[$x+1][3] = $grosse_joker;
+                 //-team
+              $goal[$x][4] = $kleine_team;
+              $goal[$x+1][4] = $grosse_team;
+                    }
+            }//end else if
+            */
+          }//for2
+     }//for1
 
-  /*------------------------------------------------------------------------------
-  /* Aufbereiten für Endausgabe des sortierten Arrays
-  /*----------------------------------------------------------------------------*/
+/*------------------------------------------------------------------------------
+/* aufbereiten für endausgabe des sortierten arrays
+/*----------------------------------------------------------------------------*/
 
-  $htmlbody .= '
+$htmlbody .= '
 <body>
 <h2>Ergebnis der Auswertung</h2>
 '.$info.'
@@ -723,177 +757,181 @@ echo "</pre>";
      <tr>
       <th class="auswert">Platz</th><th class="auswert">Name</th>';
 
-  // Gesamtinhalt getippter Spiele ausgeben?
-  if ($show_sp_ges == 1) {
+//gesamten getippter spiele ausgeben?
+if ($show_sp_ges == 1) {
     $htmlbody.= '<th class="auswert"><acronym title="Anzahl Spiele getippt"><u>'.$var_spiele.'</u></acronym></th>';
-  }
+}
 
-  // Werden Jokerpunkte zugelassen? wenn ja, Spalte einblenden - ja oder nein?
-  if (($show_joker == 1) and ($joker == 1)) {
+//werden jokerpunkte zugelassen? wenn ja, spalte einblenden   ja oder nein?
+if (($show_joker == 1) and ($joker == 1)) {
     $htmlbody .= '<th class="auswert"><acronym title="durch Joker dazugewonnene Punkte"><u>'.$var_joker.'</u></acronym></th>';
-  }
+}
 
-  // Quote richtiger Spiele ausgeben - ja oder nein?
-  if ($show_sp_proz == 1) {
-    if ($tippmodus == 0) {  // Tendenz
+//quote richtiger spieler ausgeben ja oder nein?
+if ($show_sp_proz == 1) {
+    if ($tippmodus == 0) { // tendenz
       $htmlbody .= '<th class="auswert"><acronym title="Prozent Spieltipp richtig%"><u>'.$var_prozrichtig.'</u></acronym></th>';
-    }
-    elseif ($tippmodus == 1) {  // Ergebnis
-      $htmlbody .= '<th class="auswert"><acronym title="Punkte pro Spiel"><u>'.$var_prozrichtig.'</u></acronym></th>';
-    }
   }
+  elseif ($tippmodus == 1) { // ergebnis
+    $htmlbody .= '<th class="auswert"><acronym title="Punkte pro Spiel"><u>'.$var_prozrichtig.'</u></acronym></th>';
+  }
+}
 
-  // Anzahl Tipps ausgeben - ja oder nein?
-  if ($show_punkte == 1) {
+//anzahl tipps ausgeben ja oder nein?
+if ($show_punkte == 1) {
     $htmlbody.= '<th class="auswert"><acronym title="Anzahl Tipps richtig"><u>'.$var_tippsrichtig.'</u></acronym></th>';
-  }
+}
 
-  // Team ausgeben - ja oder nein?
-  if (($show_team == 1) and ($team == 1)) {
+//team ausgeben ja oder nein?
+if (($show_team == 1) and ($team == 1)) {
     $htmlbody.= '<th class="auswert"><acronym title="Teamzugehörigkeit"><u>'.$var_team.'</u></acronym></th>';
-  }
+}
 
-  $htmlbody .= '</tr>
+$htmlbody .= '</tr>
 ';
 
-  $platz = 0;
-  $platz2 = 0;
-  $p1 = 0;
-  $p2 = 0;
+$platz = 0;
+$platz2 = 0;
+$p1 = 0;
+$p2 = 0;
 
-/*
-  echo "<pre>";
-  print_r(array_values($goal));
-  echo "</pre>";
-*/
+/*    echo "<pre>";
+    print_r(array_values($goal));
+    echo "</pre>";
 
 
-  // für HTML aufbereiten
-  for ($i = 0; $i < count($goal); $i++) {
-    // Begrenzung Anzahl Tipper
+
+/* für html aufbereiten */
+for ($i = 0; $i < count($goal); $i++) {
+
+    // begrenzung anzahl tipper
     if ($i == $showtipper) {
       break;
-    }
+  }
 
-    // Bedingung, die alle Nicht-Tipper rausfiltert falls gewünscht
-    if (($shownichttipper != 0) or ($goal[$i][2] != 0)) {
+  //bedingung, die alle nicht-tipper rausfiltert falls gewünscht
+  if (($shownichttipper != 0) or ($goal[$i][2] != 0)) {
 
-      // Wert im Array mit Username vergleichen -> fett darstellen
+    //wert im array mit username vergleichen -> fett darstellen
       if (chop($goal[$i][0]) == $username) {
         $goal[$i][0] = "<b>". $goal[$i][0] ."</b>";
-      }
+    }
 
       $platz++;
 
-      // Ausgabe der Platzierung wenn:
-      // 1. Punkte ungleich dem Vorgänger
-      // 2. Punkte gleich, aber Anzahl getippter Spiele unterschiedlich
+      //ausgabe der platzierung wenn:
+    //  1. punkte ungleich dem vorgänger
+      //  2. punkte gleich, aber anzahl getippter spiele unterschiedlich
 
-      if (($goal[$i][1] != $goal[$i-1][1]) or (($goal[$i][1] == $goal[$i-1][1]) and (($goal[$i][2] != $goal[$i-1][2])))) {
+      $vorg1 = $i > 0 ? $goal[$i-1][1] : null;  // Punkte des Vorgängers
+      $vorg2 = $i > 0 ? $goal[$i-1][2] : null;  // getippte Spiele des Vorgängers
+      if (($goal[$i][1] != $vorg1) or (($goal[$i][1] == $vorg1) and (($goal[$i][2] != $vorg2)))) {
 
-        $platz2++;
+      $platz2++;
 
-        //if (($platz <= 3) and ($platz2 <= $platz)) { $platz2 = $platz; }
+      //if (($platz <= 3) and ($platz2 <= $platz)) { $platz2 = $platz; }
 
-        if ($platz2 == 1) {
+
+      if ($platz2 == 1) {
           $p1++;
           $htmlbody .= '<tr bgcolor="'.$colorplatz1.'"> <td>';
-        }
-        else if (($platz2 == 2)and($p1<3)) {
-          $p2++;
-          $htmlbody .= '<tr bgcolor="'.$colorplatz2.'"> <td>';
-        }
-        else if (($platz2 == 3)and(($p1+$p2)<3)) {
-          $htmlbody .= '<tr bgcolor="'.$colorplatz3.'"> <td>';
-        }
-        else {
-          $htmlbody .= '<tr bgcolor="'.$tablebackcolor.'"> <td>';
-        }
-        $htmlbody .= $platz.".";
-      }  // if end
-      else {
-        if ($platz2 == 1) {
-          $p1++;
-          $htmlbody .= '<tr bgcolor="'.$colorplatz1.'"> <td>';
-        }
-        else if (($platz2 == 2)and($p1<3)) {
-          $p2++;
-          $htmlbody .= '<tr bgcolor="'.$colorplatz2.'"> <td>';
-        }
-        else if (($platz2 == 3)and(($p1+$p2)<3)) {
-          $htmlbody .= '<tr bgcolor="'.$colorplatz3.'"> <td>';
-        }
-        else {
-          $htmlbody .= '<tr bgcolor="'.$tablebackcolor.'"> <td>';
-        }
-        //$platz2 = $platz-1;
-        $htmlbody .= '&nbsp;';
+      }
+      else if (($platz2 == 2)and($p1<3)) {
+            $p2++;
+              $htmlbody .= '<tr bgcolor="'.$colorplatz2.'"> <td>';
+         }
+           else if (($platz2 == 3)and(($p1+$p2)<3)) {
+               $htmlbody .= '<tr bgcolor="'.$colorplatz3.'"> <td>';
+            }
+            else {
+                  $htmlbody .= '<tr bgcolor="'.$tablebackcolor.'"> <td>';
+             }
+      $htmlbody .= $platz.".";
+    }
+    else {
+       if ($platz2 == 1) {
+           $p1++;
+           $htmlbody .= '<tr bgcolor="'.$colorplatz1.'"> <td>';
+       }
+      else if (($platz2 == 2)and($p1<3)) {
+            $p2++;
+               $htmlbody .= '<tr bgcolor="'.$colorplatz2.'"> <td>';
+           }
+           else if (($platz2 == 3)and(($p1+$p2)<3)) {
+                 $htmlbody .= '<tr bgcolor="'.$colorplatz3.'"> <td>';
+             }
+             else {
+                $htmlbody .= '<tr bgcolor="'.$tablebackcolor.'"> <td>';
+              }
+         //$platz2 = $platz-1;
+         $htmlbody .= '&nbsp;';
 
-      }  // else end
+    }//else
 
-      // Erfolgsquote in Prozent oder in Punkte pro Spiel
-      if ($goal[$i][2] > 0) {
-        if ($tippmodus == 0) {  // Tendenz
+
+    //erfolgsquote in prozent oder in punkte pro spiel
+    if ($goal[$i][2] > 0) {
+        if ($tippmodus == 0) { // tendenz
         $quote = $goal[$i][1] / $goal[$i][2] * 100;
-        }
-        else {  // Ergebnis
-          $quote = $goal[$i][1] / $goal[$i][2];
-        }
       }
-      else {
-        $quote = 0;
+      else { // ergebnis
+           $quote = $goal[$i][1] / $goal[$i][2];
       }
+    }
+    else {
+         $quote = 0;
+       }
 
-      $htmlbody .= '</td> <td>'.$goal[$i][0].'</td>';
+    $htmlbody .= '</td> <td>'.$goal[$i][0].'</td>';
 
-      // Gesamtinhalt getippter Spiele ausgeben?
-      if ($show_sp_ges == 1) {
+    //gesamten getippter spiele ausgeben?
+    if ($show_sp_ges == 1) {
         $htmlbody .= '<td>'.$goal[$i][2].'&nbsp;</td>';
-      }
+    }
 
-      // werden Jokerpunkte zugelassen? wenn ja, Spalte einblenden - ja oder nein?
-      if (($show_joker == 1) and ($joker == 1)) {
+    //werden jokerpunkte zugelassen? wenn ja, spalte einblenden   ja oder nein?
+    if (($show_joker == 1) and ($joker == 1)) {
         $htmlbody .= '<td>'.$goal[$i][3].'&nbsp;</td>';
-      }
+    }
 
-      // Quote richtiger Spiele ausgeben - ja oder nein?
-      if ($show_sp_proz == 1) {
+    //quote richtiger spieler ausgeben ja oder nein?
+    if ($show_sp_proz == 1) {
         $htmlbody .= '<td>'.round($quote, 2).'&nbsp;</td>';
-      }
+    }
 
-      // Anzahl Tipps ausgeben - ja oder nein?
-      if ($show_punkte == 1) {
+    //anzahl tipps ausgeben ja oder nein?
+    if ($show_punkte == 1) {
         $htmlbody .= '<td>'.$goal[$i][1].'&nbsp;</td>';
-      }
+    }
 
-      // Anzahl Tipps ausgeben - ja oder nein?
-      if (($show_team == 1) and ($team == 1)) {
+    //anzahl tipps ausgeben ja oder nein?
+    if (($show_team == 1) and ($team == 1)) {
         $htmlbody .= '<td>'.$goal[$i][4].'&nbsp;</td>';
-      }
+    }
 
-      $htmlbody .= '</tr>
-';
+    $htmlbody .= '</tr>
+    ';
 
-    }  // Filter Nicht-Tipper end
-  }  // for end
+  }//end filter nicht-tipper
+}//for
 
-  $htmlbody .= '</table>
-<p align="center">';  // '<font color='.$fontcolor.'>Anzahl der aktiven Tippspieler: '. count($goal) . '</font>';
+$htmlbody .= '</table>
+<p align="center">';//'<font color='.$fontcolor.'>Anzahl der aktiven Tippspieler: '. count($goal) . '</font>';
 
-  if ($shownichttipper == 0) {
+if ($shownichttipper == 0) {
     $htmlbody .= '<font class="foot">(Nicht-Tipper werden nicht dargestellt)</font>';
-  }
+}
 
-  $zeit2 = microtime();  // Zeit Stopp
+$zeit2 = microtime(true); //stopp
 
-  $htmlbody .= '<p align="center">Stand vom '.date("d.m.Y").' - '.date("H:i") .' Uhr<br><font class="foot">generiert in '.($zeit2-$zeit1).' Sekunden</font></p>
+$htmlbody .= '<p align="center">Stand vom '.date("d.m.Y").' - '.date("H:i") .' Uhr<br><font class="foot">generiert in '.round($zeit2-$zeit1, 3).' Sekunden</font></p>
 <p align="center"><a href="auswert3.php" title="zurück zur Auswahl">zurück zur Auswahl</a>&nbsp;|&nbsp;<a href="lmo.php?action=tipp" title="zurück zum Tippspiel">zurück zum Tippspiel</a></p>';
 
 
-}  // else - wenn OK-Button geklickt wurde end
+}//end-else - wenn ok-button geklickt wurde
 
 
-// Ausgabe HTML Code an Browser
+// ausgabe html code an browser
 echo $htmlhead . $htmlbody . $htmlfoot;
 
 clearstatcache();
